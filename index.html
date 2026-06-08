@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Альбомы со мной — Фотобот</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F6F8FA; --surface: #FFFFFF; --surface2: #F9FAFB;
+    --border: #E5E7EB; --border2: #D1D5DB;
+    --accent: #635BFF; --accent2: #7A73FF; --accent-light: #ECECFD;
+    --text: #1A1F36; --text2: #3C4257;
+    --muted: #697386; --muted2: #A3ACB9;
+    --green: #09825D; --green-light: #CBFFE3;
+    --red: #C0123C; --red-light: #FFE8EF;
+    --blue: #1A56DB; --blue-light: #E1EFFE;
+    --sidebar-bg: #0B1020; --sidebar-text: #8EA2B8; --topbar-bg: #0B1020;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Montserrat', sans-serif; font-size: 13px; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ─── TOPBAR ─── */
+  .topbar { background: var(--topbar-bg); height: 56px; display: flex; align-items: center; padding: 0 24px; gap: 32px; position: sticky; top: 0; z-index: 100; flex-shrink: 0; border-bottom: 1px solid rgba(123,97,255,0.2); }
+  .topbar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0; }
+  .topbar-logo-text { font-family: 'Unbounded', sans-serif; font-size: 0.85rem; font-weight: 700; color: #fff; letter-spacing: 0.08em; }
+  .topbar-nav { display: flex; gap: 2px; flex: 1; justify-content: center; }
+  .topbar-nav a { color: rgba(255,255,255,0.55); text-decoration: none; font-size: 0.82rem; font-weight: 500; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; }
+  .topbar-nav a:hover { color: #fff; background: rgba(255,255,255,0.07); }
+  .topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .balance-chip { background: rgba(99,91,255,0.2); border: 1.5px solid rgba(99,91,255,0.4); border-radius: 20px; padding: 5px 14px; font-size: 0.82rem; font-weight: 700; color: #C7C4FF; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+  .balance-chip:hover { border-color: var(--accent); background: #312E81; color: #fff; }
+  .lang-btn { display: flex; align-items: center; gap: 5px; color: rgba(255,255,255,0.55); font-size: 0.72rem; cursor: pointer; padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); transition: all 0.2s; }
+  .lang-btn:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+  .lang-dropdown { position: relative; }
+  .lang-menu { position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 200; display: none; min-width: 160px; padding: 6px 0; overflow: hidden; }
+  .lang-menu.open { display: block; }
+  .lang-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; font-size: 0.82rem; color: var(--text2); cursor: pointer; transition: background 0.15s; font-family: 'Montserrat', sans-serif; }
+  .lang-item:hover { background: var(--surface2); }
+  .lang-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+  #lang-arrow { transition: transform 0.2s; }
+  .lang-btn.open #lang-arrow { transform: rotate(180deg); }
+
+  /* ─── LAYOUT ─── */
+  .layout { display: flex; flex: 1; min-height: calc(100vh - 56px); align-items: stretch; }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar { width: 220px; min-width: 220px; background: var(--sidebar-bg); flex-shrink: 0; display: flex; flex-direction: column; position: sticky; top: 56px; height: calc(100vh - 56px); overflow: hidden; border-right: 1px solid rgba(123,97,255,0.1); transition: width 0.3s ease, min-width 0.3s ease; }
+  .sidebar.collapsed { width: 0 !important; min-width: 0 !important; }
+  .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 1px; padding: 8px 8px 0; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+  .sidebar-item { display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 8px; color: var(--sidebar-text); text-decoration: none; font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: all 0.18s; position: relative; }
+  .sidebar-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .sidebar-item.active { background: rgba(99,91,255,0.25); color: #fff; border: 1px solid rgba(99,91,255,0.3); }
+  .sidebar-item.active .s-icon { color: var(--accent2); }
+  .s-icon { width: 15px; height: 15px; flex-shrink: 0; color: rgba(160,168,192,0.6); transition: color 0.2s; }
+  .sidebar-item:hover .s-icon { color: rgba(255,255,255,0.8); }
+  .sidebar-badge { margin-left: auto; background: var(--red); color: #fff; border-radius: 10px; padding: 1px 6px; font-size: 0.6rem; font-weight: 700; }
+  .s-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 8px 8px; }
+  .sidebar-bottom { padding: 0 8px 8px; display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
+  .disk-widget { padding: 10px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin: 4px 0; border: 1px solid rgba(255,255,255,0.05); }
+  .disk-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .disk-label { font-size: 0.62rem; color: var(--sidebar-text); text-transform: uppercase; letter-spacing: 0.06em; }
+  .disk-value { font-size: 0.62rem; color: #4ade80; font-weight: 700; }
+  .disk-track { height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+  .disk-fill { height: 100%; width: 36%; background: linear-gradient(90deg, #7B61FF, #4ade80); border-radius: 3px; }
+  .sidebar-item.instr-primary { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: rgba(255,255,255,0.9); margin-bottom: 4px; align-items: flex-start; padding: 10px 12px; position: relative; }
+  .sidebar-item.instr-primary:hover { background: rgba(16,185,129,0.22); }
+  .sidebar-item.instr-primary .s-icon { color: #6EE7B7; margin-top: 2px; }
+  .instr-badge { position: absolute; top: 7px; right: 8px; width: 16px; height: 16px; border-radius: 50%; background: #10B981; color: #fff; font-size: 0.6rem; font-weight: 900; display: flex; align-items: center; justify-content: center; animation: blink 1.8s infinite; }
+  .instr-hint { font-size: 0.6rem; color: rgba(110,231,183,0.7); margin-top: 2px; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .sidebar-item.ai-agent { align-items: flex-start; padding: 10px 12px; background: rgba(99,91,255,0.12); border: 1px solid rgba(99,91,255,0.25); color: rgba(255,255,255,0.9); margin-bottom: 6px; position: relative; }
+  .sidebar-item.ai-agent .s-icon { color: var(--accent2); margin-top: 2px; }
+  .ai-pulse { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #4ade80; animation: blink 1.5s infinite; box-shadow: 0 0 6px rgba(74,222,128,0.6); }
+  .ai-text { display: flex; align-items: center; gap: 6px; }
+  .ai-live { background: rgba(123,97,255,0.6); color: #fff; font-size: 0.55rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; }
+  .ai-hint { font-size: 0.6rem; color: rgba(159,143,255,0.6); margin-top: 2px; }
+  .sidebar-item.logout { color: rgba(255,255,255,0.25); }
+  .sidebar-item.logout:hover { color: #FCA5A5; background: rgba(239,68,68,0.08); }
+
+  /* ─── SIDEBAR TOGGLE ─── */
+  .sidebar-toggle { position: fixed; top: calc(56px + 80px); left: 220px; width: 20px; height: 52px; border-radius: 0 8px 8px 0; background: #312E81; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 300; transition: left 0.3s ease, background 0.2s; color: #fff; }
+  .sidebar-toggle:hover { background: #1E1B4B; }
+
+  /* ─── MAIN ─── */
+  .main { flex: 1; overflow: auto; min-width: 0; background: var(--bg); padding: 28px 32px 48px; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+
+  /* ══════════════════════════════
+     ACCORDION SECTIONS
+  ══════════════════════════════ */
+  .section {
+    margin-bottom: 4px;
+    animation: fadeUp 0.28s ease;
+  }
+
+  .section-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 0 12px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-head:hover .section-title { color: var(--accent); }
+
+  .section-title {
+    font-size: 0.92rem; font-weight: 700;
+    color: var(--text);
+    transition: color 0.15s;
+  }
+
+  .section-count {
+    font-size: 0.72rem; font-weight: 600;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 9px;
+    margin-left: 2px;
+  }
+
+  .section-chevron {
+    margin-left: auto;
+    width: 18px; height: 18px;
+    color: var(--muted2);
+    transition: transform 0.25s;
+    flex-shrink: 0;
+  }
+  .section.open .section-chevron { transform: rotate(180deg); }
+
+  .section-body {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+  .section.open .section-body { max-height: 4000px; }
+  .section-inner { padding: 16px 0 8px; }
+
+  /* ══════════════════════════════
+     МОИ ПОРТРЕТЫ
+  ══════════════════════════════ */
+  .portraits-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .portrait-slot {
+    position: relative;
+    width: 200px;
+    aspect-ratio: 3/4;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    flex-shrink: 0;
+  }
+
+  .portrait-slot img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Placeholder for empty slot */
+  .portrait-slot.empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    border: 1.5px dashed var(--border2);
+    transition: border-color 0.18s;
+  }
+  .portrait-slot.empty:hover { border-color: var(--accent); }
+  .portrait-slot.empty svg { color: var(--muted2); }
+  .portrait-slot.empty span { font-size: 0.72rem; color: var(--muted2); }
+
+  /* Order badge */
+  .portrait-order {
+    position: absolute; top: 8px; left: 8px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(11,16,32,0.75);
+    color: #fff;
+    font-size: 0.65rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Delete button */
+  .portrait-del {
+    position: absolute; top: 8px; right: 8px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--red);
+    border: none;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(192,18,60,0.4);
+  }
+  .portrait-del:hover { background: #a00f33; transform: scale(1.1); }
+
+  /* ══════════════════════════════
+     PHOTO GALLERY GRID
+  ══════════════════════════════ */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .photo-cell {
+    position: relative;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .photo-cell:nth-child(4n) { border-right: none; }
+  .photo-cell:hover { opacity: 0.88; }
+
+  /* Photo image area */
+  .photo-img-wrap {
+    width: 100%;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    position: relative;
+    background: #dde0e8;
+  }
+
+  .photo-img-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: top center;
+    display: block;
+    transition: transform 0.3s;
+  }
+  .photo-cell:hover .photo-img-wrap img { transform: scale(1.03); }
+
+  /* Photo meta (name + like) */
+  .photo-meta {
+    padding: 6px 8px 8px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .photo-name {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+    min-height: 14px;
+  }
+
+  .photo-actions {
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .like-btn {
+    display: flex; align-items: center; gap: 4px;
+    background: none; border: none;
+    color: var(--muted2);
+    font-size: 0.72rem;
+    font-family: 'Montserrat', sans-serif;
+    cursor: pointer;
+    padding: 3px 0;
+    transition: color 0.15s;
+  }
+  .like-btn:hover { color: var(--red); }
+  .like-btn.liked { color: var(--red); }
+  .like-btn.liked svg { fill: var(--red); }
+
+  /* Add to portrait button */
+  .add-portrait-btn {
+    margin-left: auto;
+    height: 24px; padding: 0 9px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.62rem; font-weight: 700;
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .add-portrait-btn:hover { background: var(--accent-light); border-color: var(--accent); }
+  .add-portrait-btn.added { background: var(--green-light); border-color: rgba(9,130,93,0.3); color: var(--green); pointer-events: none; }
+
+  /* ══════════════════════════════
+     COLLAGES SECTION
+  ══════════════════════════════ */
+  .collage-hint {
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .collage-stats {
+    font-size: 0.75rem;
+    color: var(--accent);
+    margin-bottom: 14px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+
+  .collage-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .collage-cell {
+    position: relative;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .collage-cell:nth-child(4n) { border-right: none; }
+  .collage-cell:hover { opacity: 0.88; }
+
+  .collage-img-wrap {
+    width: 100%;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    background: #dde0e8;
+  }
+  .collage-img-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+  }
+  .collage-cell:hover .collage-img-wrap img { transform: scale(1.03); }
+
+  .collage-meta {
+    padding: 6px 8px 8px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center;
+  }
+
+  /* ══════════════════════════════
+     LIGHTBOX
+  ══════════════════════════════ */
+  .lightbox-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.72);
+    z-index: 800;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 48px 80px 100px; /* top / sides / bottom — room for button+filename */
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+    backdrop-filter: blur(2px);
+    overflow: hidden;
+  }
+  .lightbox-overlay.open { opacity: 1; pointer-events: all; }
+
+  .lightbox-img-wrap {
+    position: relative;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    /* Fill all available height between top padding and bottom bar */
+    height: calc(100vh - 148px);
+    max-width: min(55vw, 700px);
+    width: 100%;
+  }
+  .lightbox-img-wrap img {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    border-radius: 6px;
+    user-select: none;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  }
+
+  /* Close btn */
+  .lb-close {
+    position: fixed; top: 20px; right: 20px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+    z-index: 810;
+  }
+  .lb-close:hover { background: rgba(255,255,255,0.22); }
+
+  /* Arrow nav */
+  .lb-arrow {
+    position: fixed;
+    top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.18);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+    z-index: 810;
+  }
+  .lb-arrow:hover { background: rgba(255,255,255,0.22); }
+  .lb-arrow.prev { left: 20px; }
+  .lb-arrow.next { right: 20px; }
+
+  /* Bottom bar */
+  .lb-bottom {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    padding: 16px 24px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
+    z-index: 810;
+    pointer-events: none;
+  }
+  .lb-filename {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.55);
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 0.04em;
+  }
+  .lb-action-btn {
+    height: 40px; padding: 0 28px;
+    border-radius: 10px; border: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.82rem; font-weight: 800;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex; align-items: center; gap: 8px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    pointer-events: all;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+  .lb-action-btn.add { background: #22C55E; color: #fff; }
+  .lb-action-btn.add:hover { background: #16a34a; }
+  .lb-action-btn.remove { background: var(--red); color: #fff; }
+  .lb-action-btn.remove:hover { background: #a00f33; }
+  .empty-state {
+    padding: 32px 0;
+    display: flex; align-items: center; gap: 14px;
+    color: var(--muted);
+  }
+  .empty-icon { width: 40px; height: 40px; background: var(--surface2); border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .empty-text { font-size: 0.82rem; }
+
+  /* ══════════════════════════════
+     TOAST
+  ══════════════════════════════ */
+  .toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+  .toast { background: #1A1F36; color: #fff; border-radius: 10px; padding: 12px 18px; font-size: 0.82rem; font-family: 'Montserrat', sans-serif; font-weight: 500; display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); animation: toastIn 0.3s ease; pointer-events: all; min-width: 240px; }
+  @keyframes toastIn { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:none;} }
+  @keyframes toastOut { from{opacity:1;} to{opacity:0;transform:translateY(8px);} }
+  .toast-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .toast-icon.green { background: var(--green-light); color: var(--green); }
+  .toast-icon.red   { background: var(--red-light); color: var(--red); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1280px) { .photo-grid, .collage-grid { grid-template-columns: repeat(3, 1fr); } .main { padding: 22px 24px 40px; } }
+  @media (max-width: 1100px) { .sidebar { width: 192px; min-width: 192px; } .sidebar-toggle { left: 192px; } }
+  @media (max-width: 1024px) { .sidebar { width: 0 !important; min-width: 0 !important; } .sidebar-toggle { left: 0 !important; } #toggle-arrow { transform: rotate(180deg); } .sidebar.expanded { width: 220px !important; min-width: 220px !important; } body.sidebar-expanded .sidebar-toggle { left: 220px !important; } .topbar-nav { display: none; } .topbar { justify-content: space-between; } .main { padding: 16px 16px 28px; } }
+  @media (max-width: 768px) { .photo-grid, .collage-grid { grid-template-columns: repeat(2, 1fr); } .portraits-row { gap: 8px; } .portrait-slot { width: 160px; } }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a href="#" class="topbar-logo">
+    <svg width="26" height="23" viewBox="0 0 265 233" fill="none">
+      <path d="M0 0 C0 73.26 0 146.52 0 222 C-6.2 220.62 -12.03 219.13 -18.01 217.11 C-28.91 213.46 -53.06 205.38 -96 191 C-96 138.2 -96 85.4 -96 31 C-49.69 15.5 -29.17 8.63 0 0 Z" fill="#fff" transform="translate(259,6)"/>
+      <path d="M0 0 C0 73.26 0 146.52 0 222 C-10.88 218.24 -22.01 212.65 -48.47 199.37 C-57.64 194.76 -64 191 -64 191 C-64 138.2 -64 85.4 -64 31 C-34.06 15.43 -17.27 6.98 0 0 Z" fill="#fff" transform="translate(132,6)"/>
+      <path d="M0 0 C0 73.26 0 146.52 0 222 C-14 215 -26.78 205.93 -33 191 C-39.09 168.15 -36.93 100.1 -21.74 14.45 C-6.49 0 0 0 0 0 Z" fill="#fff" transform="translate(37,6)"/>
+    </svg>
+    <span class="topbar-logo-text">ФОТОБОТ</span>
+  </a>
+  <nav class="topbar-nav">
+    <a href="#">Главная</a><a href="#">Стоимость</a><a href="#">Поддержка</a><a href="#">Аккаунт</a><a href="#">Панель управления</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="balance-chip">2 748.41 RUB</div>
+    <div class="lang-dropdown" id="lang-dropdown">
+      <div class="lang-btn" onclick="toggleLang()">
+        <span id="lang-flag">🇷🇺</span><span id="lang-code">РУССКИЙ</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="lang-arrow"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="lang-menu" id="lang-menu">
+        <div class="lang-item active" onclick="selectLang('🇷🇺','РУССКИЙ',event)">🇷🇺 Русский</div>
+        <div class="lang-item" onclick="selectLang('🇬🇧','ENGLISH',event)">🇬🇧 English</div>
+        <div class="lang-item" onclick="selectLang('🇵🇱','POLSKI',event)">🇵🇱 Polski</div>
+        <div class="lang-item" onclick="selectLang('🇺🇦','УКРАЇНСЬКА',event)">🇺🇦 Українська</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <nav class="sidebar-nav">
+    <a href="#" class="sidebar-item"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Заказы</a>
+    <a href="#" class="sidebar-item"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Мои шаблоны</a>
+    <a href="#" class="sidebar-item"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Библиотека шаблонов</a>
+    <a href="#" class="sidebar-item active"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Альбомы со мной</a>
+    <a href="#" class="sidebar-item"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.1 2.18 2 2 0 012.18 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.18 6.18l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Приём заказов</a>
+    <a href="#" class="sidebar-item"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Размеры печати</a>
+    <a href="#" class="sidebar-item"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Примеры разворотов</a>
+    <div class="s-divider"></div>
+    <a href="#" class="sidebar-item"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Профиль</a>
+    <a href="#" class="sidebar-item"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>Уведомления<span class="sidebar-badge">3</span></a>
+    <a href="#" class="sidebar-item"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>Корзина</a>
+  </nav>
+  <div class="s-divider"></div>
+  <div class="sidebar-bottom">
+    <a href="#" class="sidebar-item instr-primary">
+      <div class="instr-badge">!</div>
+      <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <div><div>Инструкция</div><div class="instr-hint">Начните здесь 👆</div></div>
+    </a>
+    <a href="#" class="sidebar-item ai-agent">
+      <div class="ai-pulse"></div>
+      <svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 012 2v1a7 7 0 010 14v1a2 2 0 01-4 0v-1a7 7 0 010-14V4a2 2 0 012-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      <div><span class="ai-text">Помощь <span class="ai-live">24/7</span></span><div class="ai-hint">Если не нашли в инструкции</div></div>
+    </a>
+    <div class="s-divider" style="margin-top:8px;"></div>
+    <div class="disk-widget">
+      <div class="disk-top"><span class="disk-label">Диск</span><span class="disk-value">3.2 / 50 GB</span></div>
+      <div class="disk-track"><div class="disk-fill"></div></div>
+    </div>
+    <a href="#" class="sidebar-item logout"><svg class="s-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Выход</a>
+  </div>
+</aside>
+
+<button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()">
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="toggle-arrow"><polyline points="15 18 9 12 15 6"/></svg>
+</button>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ══ МОИ ПОРТРЕТЫ ══ -->
+  <div class="section open" id="sec-portraits">
+    <div class="section-head" onclick="toggleSection('sec-portraits')">
+      <span class="section-title">Мои портреты</span>
+      <span class="section-count">2 фото</span>
+      <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="section-body">
+      <div class="section-inner">
+        <div class="portraits-row" id="portraits-row">
+
+          <!-- Portrait 1 -->
+          <div class="portrait-slot" id="portrait-1">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=faces" alt="Портрет 1">
+            <div class="portrait-order">1</div>
+            <button class="portrait-del" onclick="deletePortrait('portrait-1', event)" title="Удалить">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <!-- Portrait 2 -->
+          <div class="portrait-slot" id="portrait-2">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=600&fit=crop&crop=faces" alt="Портрет 2">
+            <div class="portrait-order">2</div>
+            <button class="portrait-del" onclick="deletePortrait('portrait-2', event)" title="Удалить">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+
+          <!-- Add slot -->
+          <div class="portrait-slot empty" onclick="showToast('Выберите фото из галереи ниже', 'green')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span>Добавить фото</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ПОРТРЕТНЫЕ ФОТОГРАФИИ ══ -->
+  <div class="section open" id="sec-portraits-all" style="margin-top:8px;">
+    <div class="section-head" onclick="toggleSection('sec-portraits-all')">
+      <span class="section-title">Портретные фотографии</span>
+      <span class="section-count">20 фото</span>
+      <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="section-body">
+      <div class="section-inner">
+        <div class="photo-grid" id="portraits-grid">
+          <!-- generated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ФОТО УЧИТЕЛЕЙ ══ -->
+  <div class="section" id="sec-teachers" style="margin-top:8px;">
+    <div class="section-head" onclick="toggleSection('sec-teachers')">
+      <span class="section-title">Фото учителей</span>
+      <span class="section-count">10 фото</span>
+      <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="section-body">
+      <div class="section-inner">
+        <div class="photo-grid" id="teachers-grid">
+          <!-- generated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ КОЛЛАЖИ ══ -->
+  <div class="section" id="sec-collages" style="margin-top:8px;">
+    <div class="section-head" onclick="toggleSection('sec-collages')">
+      <span class="section-title">Коллажи</span>
+      <span class="section-count">11 фото</span>
+      <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="section-body">
+      <div class="section-inner">
+        <div class="collage-hint">Выберите фотографии:</div>
+        <div class="collage-stats" id="collage-stats">
+          <span>0/0 вертикальных</span>
+          <span>0/0 горизонтальных</span>
+        </div>
+        <div class="collage-grid" id="collages-grid">
+          <!-- generated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<div class="lightbox-overlay" id="lightbox" onclick="lbClickOutside(event)">
+  <div class="lightbox-img-wrap">
+    <img id="lb-img" src="" alt="">
+  </div>
+  <button class="lb-close" onclick="closeLightbox()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <button class="lb-arrow prev" onclick="lbNav(-1)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <button class="lb-arrow next" onclick="lbNav(1)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+  <div class="lb-bottom">
+    <span class="lb-filename" id="lb-filename"></span>
+    <div id="lb-actions" style="display:flex;gap:10px;pointer-events:all;">
+      <!-- portrait: single add/remove btn -->
+      <button class="lb-action-btn" id="lb-action-btn" onclick="lbAction()" style="display:none;"></button>
+      <!-- collage: dislike + like -->
+      <button class="lb-action-btn remove" id="lb-dislike-btn" onclick="lbDislike()" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        Мне не нравится
+      </button>
+      <button class="lb-action-btn add" id="lb-like-btn" onclick="lbLike()" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        Мне нравится
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+  // ─── DATA ───
+  const portraitPhotos = [
+    { name: 'Александр Ковальчук', img: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6801.jpg' },
+    { name: 'Александр Ковальчук', img: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6812.jpg' },
+    { name: 'Александр Ковальчук', img: 'https://images.unsplash.com/photo-1528892952291-009c663ce843?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6823.jpg' },
+    { name: 'Алеся Вайзман', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6830.jpg' },
+    { name: 'Алеся Вайзман', img: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6835.jpg' },
+    { name: 'Алеся Вайзман', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6841.jpg' },
+    { name: 'Анастасия Сидоренко', img: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6844.jpg' },
+    { name: 'Анастасия Сидоренко', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6848.jpg' },
+    { name: 'Андрей Николаев', img: 'https://images.unsplash.com/photo-1545167622-3a6ac756afa4?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6852.jpg' },
+    { name: 'Андрей Николаев, Александр Хилаэтдинов', img: 'https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6860.jpg' },
+    { name: 'Андрей Николаев, Matthew Whilson', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6871.jpg' },
+    { name: 'Артём Калимуллин', img: 'https://images.unsplash.com/photo-1500048993953-d23a436266cf?w=300&h=400&fit=crop&crop=faces', file: 'k5ryCoAIAl0.jpg' },
+    { name: 'Артём Калимуллин', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop&crop=faces', file: 'k5ryCoAIAl1.jpg' },
+    { name: 'Артём Калимуллин', img: 'https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?w=300&h=400&fit=crop&crop=faces', file: 'k5ryCoAIAl2.jpg' },
+    { name: 'Валентин Дементьев', img: 'https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6880.jpg' },
+    { name: 'Валентин Дементьев', img: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6885.jpg' },
+    { name: 'Виктория Петрова', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6890.jpg' },
+    { name: 'Виктория Петрова', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6894.jpg' },
+    { name: 'Дарья Ломова', img: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6900.jpg' },
+    { name: 'Дарья Ломова', img: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=300&h=400&fit=crop&crop=faces', file: 'DSC_6905.jpg' },
+  ];
+
+  const teacherPhotos = [
+    { name: 'Анна Бегунова', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=400&fit=crop&crop=faces', file: 'teacher_001.jpg' },
+    { name: 'Андрей Сергиенко', img: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=300&h=400&fit=crop&crop=faces', file: 'teacher_002.jpg' },
+    { name: 'Александр Толстой', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop&crop=faces', file: 'teacher_003.jpg' },
+    { name: '', img: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&h=400&fit=crop&crop=faces', file: 'teacher_004.jpg' },
+    { name: 'Валентина Семёновна', img: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=300&h=400&fit=crop&crop=faces', file: 'teacher_005.jpg' },
+    { name: 'Александр Ковальчук', img: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&h=400&fit=crop&crop=faces', file: 'teacher_006.jpg' },
+    { name: 'Эльвира Зайцева', img: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=300&h=400&fit=crop&crop=faces', file: 'teacher_007.jpg' },
+    { name: 'Алина Куркина', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=400&fit=crop&crop=faces', file: 'teacher_008.jpg' },
+    { name: 'Суслова Дарья', img: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=300&h=400&fit=crop&crop=faces', file: 'teacher_009.jpg' },
+    { name: '', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=400&fit=crop&crop=faces', file: 'teacher_010.jpg' },
+  ];
+
+  const collagePhotos = [
+    { img: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=300&fit=crop', likes: 0, file: 'collage_001.jpg' },
+    { img: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&h=300&fit=crop', likes: 0, file: 'collage_002.jpg' },
+    { img: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=400&h=300&fit=crop', likes: 0, file: 'collage_003.jpg' },
+    { img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop', likes: 0, file: 'collage_004.jpg' },
+    { img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop', likes: 0, file: 'collage_005.jpg' },
+    { img: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400&h=300&fit=crop', likes: 0, file: 'collage_006.jpg' },
+    { img: 'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=400&h=300&fit=crop', likes: 0, file: 'collage_007.jpg' },
+    { img: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=300&fit=crop', likes: 0, file: 'collage_008.jpg' },
+    { img: 'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=400&h=300&fit=crop', likes: 0, file: 'collage_009.jpg' },
+    { img: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=400&h=300&fit=crop', likes: 0, file: 'collage_010.jpg' },
+    { img: 'https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=400&h=300&fit=crop', likes: 0, file: 'collage_011.jpg' },
+  ];
+
+  // Set of indices added to portraits
+  const addedToPortraits = new Set();
+
+  // ─── RENDER PORTRAIT PHOTOS ───
+  function renderPortraitPhotos() {
+    const grid = document.getElementById('portraits-grid');
+    grid.innerHTML = portraitPhotos.map((p, i) => `
+      <div class="photo-cell" onclick="openLightbox('portrait', ${i})">
+        <div class="photo-img-wrap">
+          <img src="${p.img}" alt="${p.name}" loading="lazy">
+        </div>
+        <div class="photo-meta">
+          <div class="photo-name">${p.name}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ─── RENDER TEACHER PHOTOS ───
+  function renderTeacherPhotos() {
+    const grid = document.getElementById('teachers-grid');
+    grid.innerHTML = teacherPhotos.map((p, i) => `
+      <div class="photo-cell" onclick="openLightbox('teacher', ${i})">
+        <div class="photo-img-wrap">
+          <img src="${p.img}" alt="${p.name}" loading="lazy">
+        </div>
+        <div class="photo-meta">
+          <div class="photo-name">${p.name}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ─── RENDER COLLAGES ───
+  function renderCollages() {
+    const grid = document.getElementById('collages-grid');
+    grid.innerHTML = collagePhotos.map((p, i) => `
+      <div class="collage-cell" onclick="openLightbox('collage', ${i})">
+        <div class="collage-img-wrap">
+          <img src="${p.img}" alt="Коллаж ${i+1}" loading="lazy">
+        </div>
+        ${p.likes > 0 ? `<div class="collage-meta"><span style="font-size:0.7rem;color:var(--red);display:flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>${p.likes}</span></div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // ─── LIGHTBOX ───
+  let lbCollection = [];   // current collection array
+  let lbType = '';         // 'portrait' | 'teacher' | 'collage'
+  let lbIndex = 0;
+
+  function openLightbox(type, idx) {
+    lbType = type;
+    lbIndex = idx;
+    lbCollection = type === 'portrait' ? portraitPhotos
+                 : type === 'teacher'  ? teacherPhotos
+                 : collagePhotos;
+    updateLightbox();
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function updateLightbox() {
+    const item = lbCollection[lbIndex];
+    document.getElementById('lb-img').src = item.img;
+    document.getElementById('lb-filename').textContent = item.file || '';
+
+    const singleBtn  = document.getElementById('lb-action-btn');
+    const likeBtn    = document.getElementById('lb-like-btn');
+    const dislikeBtn = document.getElementById('lb-dislike-btn');
+
+    // Reset all
+    singleBtn.style.display  = 'none';
+    likeBtn.style.display    = 'none';
+    dislikeBtn.style.display = 'none';
+
+    if (lbType === 'portrait') {
+      singleBtn.style.display = 'flex';
+      if (addedToPortraits.has(lbIndex)) {
+        singleBtn.className = 'lb-action-btn remove';
+        singleBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg> Удалить`;
+      } else {
+        singleBtn.className = 'lb-action-btn add';
+        singleBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Добавить в мои портреты`;
+      }
+    } else if (lbType === 'collage') {
+      likeBtn.style.display    = 'flex';
+      dislikeBtn.style.display = 'flex';
+      // Update like button state
+      const liked = collagePhotos[lbIndex].liked;
+      likeBtn.className    = liked ? 'lb-action-btn add' : 'lb-action-btn add';
+      dislikeBtn.className = liked === false ? 'lb-action-btn remove' : 'lb-action-btn remove';
+    }
+    // teacher — no buttons
+  }
+
+  function lbLike() {
+    collagePhotos[lbIndex].liked = true;
+    collagePhotos[lbIndex].likes = Math.max(1, (collagePhotos[lbIndex].likes || 0) + 1);
+    renderCollages();
+    showToast('Отмечено: Мне нравится', 'green');
+    updateLightbox();
+  }
+
+  function lbDislike() {
+    collagePhotos[lbIndex].liked = false;
+    if (collagePhotos[lbIndex].likes > 0) collagePhotos[lbIndex].likes--;
+    renderCollages();
+    showToast('Отмечено: Мне не нравится', 'red');
+    updateLightbox();
+  }
+
+  function lbAction() {
+    if (lbType !== 'portrait') return;
+    const key = lbIndex;
+    const item = portraitPhotos[key];
+
+    if (addedToPortraits.has(key)) {
+      // Remove from portraits → back to gallery
+      addedToPortraits.delete(key);
+      removePortraitSlot(key);
+      showToast('Фото возвращено в галерею', 'red');
+    } else {
+      // Add to portraits
+      addedToPortraits.add(key);
+      addPortraitSlot(item, key);
+      showToast('Добавлено в Мои портреты', 'green');
+    }
+    updateLightbox();
+  }
+
+  // Add portrait slot dynamically
+  function addPortraitSlot(item, key) {
+    const row = document.getElementById('portraits-row');
+    // Remove empty slot if exists, add after last portrait
+    const emptySlot = row.querySelector('.portrait-slot.empty');
+    const count = row.querySelectorAll('.portrait-slot:not(.empty)').length + 1;
+    const div = document.createElement('div');
+    div.className = 'portrait-slot';
+    div.id = 'dyn-portrait-' + key;
+    div.innerHTML = `
+      <img src="${item.img}" alt="${item.name}">
+      <div class="portrait-order">${count}</div>
+      <button class="portrait-del" onclick="removeFromPortraitsBtn(${key}, event)" title="Убрать из портретов">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>`;
+    if (emptySlot) row.insertBefore(div, emptySlot);
+    else row.appendChild(div);
+  }
+
+  // Remove portrait slot by key (keep empty slot)
+  function removePortraitSlot(key) {
+    const el = document.getElementById('dyn-portrait-' + key);
+    if (el) {
+      el.style.transition = 'opacity 0.22s, transform 0.22s';
+      el.style.opacity = '0'; el.style.transform = 'scale(0.92)';
+      setTimeout(() => { el.remove(); renumberPortraits(); }, 230);
+    }
+  }
+
+  function removeFromPortraitsBtn(key, e) {
+    e.stopPropagation();
+    addedToPortraits.delete(key);
+    removePortraitSlot(key);
+    showToast('Фото возвращено в галерею', 'red');
+  }
+
+  function renumberPortraits() {
+    document.querySelectorAll('#portraits-row .portrait-slot:not(.empty) .portrait-order')
+      .forEach((el, i) => { el.textContent = i + 1; });
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function lbClickOutside(e) {
+    if (e.target === document.getElementById('lightbox')) closeLightbox();
+  }
+
+  function lbNav(dir) {
+    lbIndex = (lbIndex + dir + lbCollection.length) % lbCollection.length;
+    updateLightbox();
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('lightbox').classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft')  lbNav(-1);
+    if (e.key === 'ArrowRight') lbNav(1);
+  });
+
+  // ─── TOGGLE LIKE ───
+  function toggleLike(btnId) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const liked = btn.classList.toggle('liked');
+    const count = btn.querySelector('span');
+    count.textContent = liked ? parseInt(count.textContent) + 1 : Math.max(0, parseInt(count.textContent) - 1);
+    const svg = btn.querySelector('svg');
+    if (liked) svg.setAttribute('fill', 'currentColor');
+    else svg.setAttribute('fill', 'none');
+  }
+
+  // ─── ACCORDION ───
+  function toggleSection(id) {
+    document.getElementById(id).classList.toggle('open');
+  }
+
+  // ─── SIDEBAR ───
+  function getSidebarWidth() {
+    const w = window.innerWidth;
+    if (w <= 1024) return 52; if (w <= 1280) return 190; return 220;
+  }
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const btn = document.getElementById('sidebar-toggle-btn');
+    const arrow = document.getElementById('toggle-arrow');
+    if (window.innerWidth <= 1024) {
+      const expanded = sidebar.classList.toggle('expanded');
+      btn.style.left = expanded ? '220px' : '0px';
+      arrow.style.transform = expanded ? '' : 'rotate(180deg)';
+    } else {
+      const collapsed = sidebar.classList.toggle('collapsed');
+      btn.style.left = collapsed ? '0px' : getSidebarWidth() + 'px';
+      arrow.style.transform = collapsed ? 'rotate(180deg)' : '';
+    }
+  }
+  window.addEventListener('resize', () => {
+    const sidebar = document.getElementById('sidebar');
+    const btn = document.getElementById('sidebar-toggle-btn');
+    if (window.innerWidth > 1024 && !sidebar.classList.contains('collapsed'))
+      btn.style.left = getSidebarWidth() + 'px';
+  });
+  (function() {
+    if (window.innerWidth <= 1024) {
+      document.getElementById('sidebar-toggle-btn').style.left = '0px';
+      document.getElementById('toggle-arrow').style.transform = 'rotate(180deg)';
+    }
+  })();
+
+  // ─── LANG ───
+  function toggleLang() { document.getElementById('lang-menu').classList.toggle('open'); document.querySelector('.lang-btn').classList.toggle('open'); }
+  function selectLang(f,c,e) { e.stopPropagation(); document.getElementById('lang-flag').textContent=f; document.getElementById('lang-code').textContent=c; document.querySelectorAll('.lang-item').forEach(i=>i.classList.remove('active')); e.currentTarget.classList.add('active'); document.getElementById('lang-menu').classList.remove('open'); document.querySelector('.lang-btn').classList.remove('open'); }
+  document.addEventListener('click', e => { const dd=document.getElementById('lang-dropdown'); if(dd&&!dd.contains(e.target)){document.getElementById('lang-menu').classList.remove('open'); const b=document.querySelector('.lang-btn'); if(b)b.classList.remove('open');} });
+
+  // ─── TOAST ───
+  function showToast(msg, type) {
+    const icons = { green:'<polyline points="20 6 9 17 4 12"/>', red:'<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>' };
+    const wrap = document.getElementById('toast-wrap');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = `<div class="toast-icon ${type}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${icons[type]||icons.green}</svg></div><span>${msg}</span>`;
+    wrap.appendChild(t);
+    setTimeout(() => { t.style.animation = 'toastOut 0.3s ease forwards'; setTimeout(() => t.remove(), 300); }, 3000);
+  }
+
+  // ─── INIT ───
+  renderPortraitPhotos();
+  renderTeacherPhotos();
+  renderCollages();
+</script>
+</body>
+</html>
